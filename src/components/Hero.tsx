@@ -114,10 +114,10 @@ export function Hero() {
   return (
     <section
       aria-label="Welcome"
-      className="px-3 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-6 sm:pb-8 bg-[#F6F2EA]"
+      className="px-3 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-4 sm:pb-6 bg-[#F6F2EA]"
     >
       {/* Outer Rounded Luxury Frame matching user reference */}
-      <div className="relative rounded-[24px] sm:rounded-[36px] overflow-hidden min-h-[74vh] sm:min-h-[88vh] flex flex-col justify-between p-3.5 xs:p-5 sm:p-8 md:p-12 shadow-2xl border border-[#E7DDCE]">
+      <div className="relative rounded-[24px] sm:rounded-[36px] overflow-hidden min-h-[76vh] sm:min-h-[88vh] flex flex-col justify-between pt-3.5 px-3.5 pb-2 xs:pb-3 sm:pt-8 sm:px-8 sm:pb-4 md:pt-10 md:px-12 md:pb-6 shadow-2xl border border-[#E7DDCE]">
 
         {/* =========================================================================
             SLIDESHOW BACKGROUND (Clear, crisp high-res natural images with soft vignette)
@@ -209,7 +209,7 @@ export function Hero() {
         {/* =========================================================================
             BOTTOM: LUXURY FLOATING SEGMENTED BOOKING PILL (Belmond / Airbnb Luxe Style)
            ========================================================================= */}
-        <div className="relative z-30 max-w-4xl mx-auto w-full">
+        <div className="relative z-30 max-w-4xl mx-auto w-full mt-auto">
           {/* Backdrop click to dismiss dropdowns */}
           {(guestsDropdownOpen || datesDropdownOpen) && (
             <div
@@ -436,18 +436,6 @@ export function Hero() {
               </div>
 
             </div>
-          </div>
-
-          {/* Micro-assurances below search bar */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 mt-2 sm:mt-3 text-[10px] sm:text-[11px] text-white/90 font-medium drop-shadow-md">
-            <span className="inline-flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Direct Host Rates</span>
-            </span>
-            <span className="hidden sm:inline opacity-60">&bull;</span>
-            <span>No Hidden Booking Fees</span>
-            <span className="hidden sm:inline opacity-60">&bull;</span>
-            <span>Instant Confirmation</span>
           </div>
         </div>
 

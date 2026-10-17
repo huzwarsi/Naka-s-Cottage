@@ -1,11 +1,32 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useHotel } from "@/context/HotelContext";
+import { Home, Waves, Sunrise, Utensils, BedDouble, Flame } from "lucide-react";
 
 export function Story() {
   const hotel = useHotel();
   const { story } = hotel;
+  const [inView, setInView] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (gridRef.current) {
+      observer.observe(gridRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section
@@ -68,37 +89,52 @@ export function Story() {
             </h2>
 
             <div className="space-y-3.5 sm:space-y-4 text-xs sm:text-sm md:text-base text-[#6D7168] font-normal leading-relaxed max-w-2xl">
-              {story.paragraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+              <p>
+                Nestled on Unknown Heroes Street in Tbilisi, <strong className="font-bold text-[#1B2E24]">Naka’s Cottage</strong> is a distinctive two-story A-frame chalet offering a peaceful escape for couples, families, and small groups.
+              </p>
+              <p>
+                Enjoy relaxing moments on the private balcony, unwind in the hanging egg chair with a cup of Georgian coffee, and spend sunny afternoons by the swimming pool. In the evening, gather for a traditional Georgian-style barbecue on the balcony and take in the surrounding scenery.
+              </p>
+              <p>
+                Inside, warm natural timber finishes, ambient lighting, a cozy loft-style sleeping area, a modern kitchen with a dishwasher, and a beautifully designed bathroom create a comfortable and inviting retreat.
+              </p>
             </div>
 
-            {/* Design & Material Highlights Grid */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-[#E7DDCE]">
-              <div className="p-2.5 sm:p-4 rounded-xl bg-[#F6F2EA] border border-[#E7DDCE] text-center sm:text-left">
-                <span className="font-serif text-lg sm:text-2xl text-[#1B2E24] font-bold block">
-                  2-Story
-                </span>
-                <span className="text-[9px] sm:text-[10.5px] text-[#1B2E24] font-bold uppercase tracking-wider block mt-0.5">
-                  A-Frame Chalet
-                </span>
-              </div>
-              <div className="p-2.5 sm:p-4 rounded-xl bg-[#F6F2EA] border border-[#E7DDCE] text-center sm:text-left">
-                <span className="font-serif text-lg sm:text-2xl text-[#1B2E24] font-bold block">
-                  Private
-                </span>
-                <span className="text-[9px] sm:text-[10.5px] text-[#1B2E24] font-bold uppercase tracking-wider block mt-0.5">
-                  Swimming Pool
-                </span>
-              </div>
-              <div className="p-2.5 sm:p-4 rounded-xl bg-[#F6F2EA] border border-[#E7DDCE] text-center sm:text-left">
-                <span className="font-serif text-lg sm:text-2xl text-[#1B2E24] font-bold block">
-                  180°
-                </span>
-                <span className="text-[9px] sm:text-[10.5px] text-[#1B2E24] font-bold uppercase tracking-wider block mt-0.5">
-                  Lake Panorama
-                </span>
-              </div>
+            {/* Key Property Highlights with Staggered Entrance Animation */}
+            <div
+              ref={gridRef}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-[#E7DDCE]"
+            >
+              {[
+                { label: "Two-Story A-Frame Chalet", icon: Home },
+                { label: "Swimming Pool", icon: Waves },
+                { label: "Private Balcony & Lake Views", icon: Sunrise },
+                { label: "Modern Kitchen with Dishwasher", icon: Utensils },
+                { label: "Loft-Style Sleeping Area", icon: BedDouble },
+                { label: "Balcony Barbecue Area", icon: Flame },
+              ].map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      transitionDelay: inView ? `${idx * 130}ms` : "0ms",
+                    }}
+                    className={`group flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl bg-[#F6F2EA] border border-[#E7DDCE] text-[#1B2E24] hover:border-[#B18A5A] hover:bg-white transition-all duration-600 ease-out shadow-2xs hover:shadow-sm transform ${
+                      inView
+                        ? "opacity-100 translate-y-0 scale-100"
+                        : "opacity-0 translate-y-6 scale-95"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#FFFCF7] border border-[#E7DDCE] group-hover:border-[#B18A5A] group-hover:bg-[#31483A] group-hover:text-white flex items-center justify-center shrink-0 transition-all text-[#31483A]">
+                      <Icon className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    </div>
+                    <span className="text-xs sm:text-[13px] font-bold text-[#1B2E24] tracking-tight">
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

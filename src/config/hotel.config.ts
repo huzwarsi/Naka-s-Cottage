@@ -181,9 +181,9 @@ export const hotelConfig: HotelConfig = {
     eyebrow: "About Naka's Cottage",
     heading: "A Natural Wooden Sanctuary Overlooking Tbilisi Lake",
     paragraphs: [
-      "Nestled on Unknown Heroes Street in Tbilisi, Naka's Cottage is a distinctive architectural two-story A-frame chalet designed for travelers, couples, and families seeking an intimate, peaceful escape.",
-      "Wake up to fresh lake breezes on the private balcony, relax in the hanging egg chair with Georgian coffee, spend sun-soaked afternoons by your private swimming pool, and grill traditional Georgian shashlik on the balcony mangal as the sun sets over the water.",
-      "Inside, warm natural timber panels, designer rope lighting, a cozy master loft bed, a modern kitchen with dishwasher, and an illuminated luxury bathroom provide all the comforts of a high-end boutique retreat."
+      "Nestled on Unknown Heroes Street in Tbilisi, Naka’s Cottage is a distinctive two-story A-frame chalet offering a peaceful escape for couples, families, and small groups.",
+      "Enjoy relaxing moments on the private balcony, unwind in the hanging egg chair with a cup of Georgian coffee, and spend sunny afternoons by the swimming pool. In the evening, gather for a traditional Georgian-style barbecue on the balcony and take in the surrounding scenery.",
+      "Inside, warm natural timber finishes, ambient lighting, a cozy loft-style sleeping area, a modern kitchen with a dishwasher, and a beautifully designed bathroom create a comfortable and inviting retreat."
     ],
     image: "/images/client/chalet-golden-hour-front.png",
     imageAlt: "Naka's Cottage A-Frame architecture at sunset",

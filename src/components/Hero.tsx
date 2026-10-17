@@ -85,11 +85,11 @@ export function Hero() {
 
   const slides = defaultHeroSlides;
 
-  // Auto-animate every 4.5 seconds
+  // Auto-animate every 2.5 seconds as requested
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 4500);
+    }, 2500);
     return () => clearInterval(interval);
   }, [slides.length]);
 
@@ -128,7 +128,7 @@ export function Hero() {
             return (
               <div
                 key={slide.url}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
                   }`}
               >
                 <Image

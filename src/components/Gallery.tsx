@@ -77,12 +77,13 @@ export function Gallery() {
     <section
       id="gallery"
       aria-labelledby="gallery-heading"
-      className="py-16 sm:py-24 bg-[#F6F2EA] border-t border-[#E7DDCE]"
+      className="px-3 sm:px-6 lg:px-8 py-10 sm:py-16 bg-[#F6F2EA]"
     >
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
+      {/* Outer Rounded Luxury Frame matching Hero Banner framing */}
+      <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden bg-[#FFFCF7] p-6 sm:p-10 md:p-12 shadow-2xl border border-[#E7DDCE] max-w-[1360px] mx-auto">
         
         {/* Header */}
-        <div className="max-w-2xl mb-8 sm:mb-12">
+        <div className="max-w-2xl mb-8 sm:mb-10">
           <div className="flex items-center space-x-2 mb-2">
             <span className="w-6 sm:w-8 h-[2px] bg-[#B18A5A]" />
             <span className="text-[10px] sm:text-xs uppercase tracking-[0.22em] font-bold text-[#B18A5A]">
@@ -101,7 +102,7 @@ export function Gallery() {
         </div>
 
         {/* 2-Column on Mobile, 3-Column on Tablet/Desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
           {gallery.map((item, index) => {
             const isWide = index === 0;
             return (
@@ -110,7 +111,7 @@ export function Gallery() {
                 type="button"
                 onClick={(e) => handleOpen(index, e)}
                 aria-label={`View photo: ${item.caption || item.alt}`}
-                className={`group relative overflow-hidden rounded-xl border border-[#E7DDCE] bg-[#FFFCF7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#31483A] text-left cursor-zoom-in shadow-sm hover:shadow-md transition-all ${
+                className={`group relative overflow-hidden rounded-[20px] sm:rounded-[26px] border border-[#E7DDCE] bg-[#F6F2EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#31483A] text-left cursor-zoom-in shadow-xs hover:shadow-xl transition-all duration-500 ${
                   isWide
                     ? "col-span-2 aspect-[16/9] sm:aspect-[16/9]"
                     : "aspect-[4/3] sm:aspect-[4/3]"
@@ -120,13 +121,14 @@ export function Gallery() {
                   src={item.image}
                   alt={item.alt}
                   fill
+                  quality={95}
                   sizes={isWide ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 50vw, 33vw"}
                   className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 
                 {/* Caption overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300 flex items-end p-2.5 sm:p-4">
-                  <span className="text-[10px] sm:text-xs text-[#FFFCF7] font-medium tracking-wide line-clamp-1">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300 flex items-end p-3 sm:p-5">
+                  <span className="text-xs sm:text-sm text-white font-medium tracking-wide line-clamp-1 drop-shadow-md">
                     {item.caption || item.alt}
                   </span>
                 </div>
@@ -163,7 +165,7 @@ export function Gallery() {
             className="relative w-full max-w-4xl max-h-[85vh] flex flex-col items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative w-full h-[60vh] sm:h-[72vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+            <div className="relative w-full h-[60vh] sm:h-[72vh] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-white/20 bg-black">
               <Image
                 src={activeItem.image}
                 alt={activeItem.alt}

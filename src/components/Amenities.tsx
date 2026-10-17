@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useHotel } from "@/context/HotelContext";
+import { ArrowRight } from "lucide-react";
 
 export function Amenities() {
   const hotel = useHotel();
@@ -88,7 +89,7 @@ export function Amenities() {
 
                   <div className="pt-3 border-t border-[#E7DDCE] flex items-center justify-between text-[11px] font-bold text-[#31483A]">
                     <span className="uppercase tracking-[0.12em]">Included in Stay</span>
-                    <span className="transform transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </div>
               </div>

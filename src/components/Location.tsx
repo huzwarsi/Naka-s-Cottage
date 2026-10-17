@@ -1,6 +1,7 @@
 "use client";
 
 import { useHotel } from "@/context/HotelContext";
+import { Check, ExternalLink } from "lucide-react";
 
 export function Location() {
   const hotel = useHotel();
@@ -72,11 +73,11 @@ export function Location() {
 
               <div className="pt-2 border-t border-[#E7DDCE] space-y-1.5 text-[11px] text-[#31483A]">
                 <div className="flex items-center space-x-2 font-medium">
-                  <span className="text-[#B18A5A]">✓</span>
+                  <Check className="w-3.5 h-3.5 text-[#B18A5A] shrink-0 stroke-[2.5]" />
                   <span>Free secure private parking inside gated courtyard</span>
                 </div>
                 <div className="flex items-center space-x-2 font-medium">
-                  <span className="text-[#B18A5A]">✓</span>
+                  <Check className="w-3.5 h-3.5 text-[#B18A5A] shrink-0 stroke-[2.5]" />
                   <span>Easy taxi &amp; Bolt / Yandex access from city center</span>
                 </div>
               </div>
@@ -94,19 +95,7 @@ export function Location() {
                 className="shimmer-btn inline-flex items-center justify-center space-x-2.5 w-full py-3.5 px-6 rounded-full text-xs uppercase tracking-[0.16em] font-bold text-[#FFFCF7] shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <span>Open in Google Maps App</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
+                <ExternalLink className="w-4 h-4 shrink-0" />
               </a>
             </div>
 

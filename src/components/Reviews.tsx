@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import { useHotel } from "@/context/HotelContext";
+import { Star, ChevronLeft, ChevronRight, Play, Pause, Check, User } from "lucide-react";
 
 interface ReviewItem {
   id: string;
   author: string;
-  avatarText?: string;
-  avatarBg?: string;
+  avatarImage?: string;
   badge?: string;
   rating: number;
   date: string;
@@ -21,8 +20,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r1",
     author: "Edgar A.",
-    avatarText: "EA",
-    avatarBg: "bg-[#2563EB]",
+    avatarImage: "/images/avatars/avatar-1.jpg",
     badge: "Local Guide · 11 reviews · 4 photos",
     rating: 5,
     date: "3 months ago",
@@ -33,8 +31,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r2",
     author: "Ani G.",
-    avatarText: "AG",
-    avatarBg: "bg-[#7C3AED]",
+    avatarImage: "/images/avatars/avatar-2.jpg",
     badge: "Verified Guest",
     rating: 5,
     date: "4 months ago",
@@ -45,8 +42,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r3",
     author: "Tako Jintcharadze",
-    avatarText: "TJ",
-    avatarBg: "bg-[#059669]",
+    avatarImage: "/images/avatars/avatar-4.jpg",
     badge: "1 review · 1 photo",
     rating: 5,
     date: "5 months ago",
@@ -57,8 +53,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r4",
     author: "Robakidze 13",
-    avatarText: "R1",
-    avatarBg: "bg-[#D97706]",
+    avatarImage: "/images/avatars/avatar-3.jpg",
     badge: "1 review",
     rating: 5,
     date: "4 months ago",
@@ -69,8 +64,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r5",
     author: "Tamila (თამილა)",
-    avatarText: "თ",
-    avatarBg: "bg-[#DB2777]",
+    avatarImage: "/images/avatars/avatar-7.jpg",
     badge: "Vacation Stay · 1 review",
     rating: 5,
     date: "5 months ago",
@@ -81,8 +75,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r6",
     author: "Nani Tordia",
-    avatarText: "NT",
-    avatarBg: "bg-[#0D9488]",
+    avatarImage: "/images/avatars/avatar-5.jpg",
     badge: "1 review",
     rating: 5,
     date: "5 months ago",
@@ -93,8 +86,7 @@ const reviewsData: ReviewItem[] = [
   {
     id: "r7",
     author: "Giorgi K.",
-    avatarText: "GK",
-    avatarBg: "bg-[#EA580C]",
+    avatarImage: "/images/avatars/avatar-6.jpg",
     badge: "Local Guide",
     rating: 5,
     date: "2 months ago",
@@ -175,9 +167,12 @@ export function Reviews() {
               <div className="text-left">
                 <div className="flex items-center space-x-1.5">
                   <span className="font-serif text-base font-bold text-[#1B2E24]">4.0</span>
-                  <div className="flex text-[#F59E0B] text-xs">
-                    {"★".repeat(4)}
-                    <span className="text-gray-300">★</span>
+                  <div className="flex items-center space-x-0.5 text-[#F59E0B]">
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                    <Star className="w-3.5 h-3.5 text-gray-300" />
                   </div>
                 </div>
                 <span className="text-[10px] text-[#6D7168] font-medium block -mt-0.5 group-hover:text-[#B18A5A] transition-colors">
@@ -191,30 +186,40 @@ export function Reviews() {
               <button
                 type="button"
                 onClick={() => scrollByAmount("left")}
-                className="w-9 h-9 rounded-full bg-[#FFFCF7] border border-[#E7DDCE] text-[#1B2E24] hover:bg-[#31483A] hover:text-[#FFFCF7] transition-colors flex items-center justify-center shadow-xs text-sm"
+                className="w-9 h-9 rounded-full bg-[#FFFCF7] border border-[#E7DDCE] text-[#1B2E24] hover:bg-[#31483A] hover:text-[#FFFCF7] transition-colors flex items-center justify-center shadow-xs"
                 aria-label="Scroll reviews left"
               >
-                &larr;
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => scrollByAmount("right")}
-                className="w-9 h-9 rounded-full bg-[#FFFCF7] border border-[#E7DDCE] text-[#1B2E24] hover:bg-[#31483A] hover:text-[#FFFCF7] transition-colors flex items-center justify-center shadow-xs text-sm"
+                className="w-9 h-9 rounded-full bg-[#FFFCF7] border border-[#E7DDCE] text-[#1B2E24] hover:bg-[#31483A] hover:text-[#FFFCF7] transition-colors flex items-center justify-center shadow-xs"
                 aria-label="Scroll reviews right"
               >
-                &rarr;
+                <ChevronRight className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setIsPaused(!isPaused)}
-                className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold border transition-colors flex items-center space-x-1.5 ${
                   isPaused
                     ? "bg-[#31483A] text-[#FFFCF7] border-[#31483A]"
                     : "bg-[#FFFCF7] text-[#6D7168] border-[#E7DDCE] hover:text-[#1B2E24]"
                 }`}
                 aria-label={isPaused ? "Resume auto scroll" : "Pause auto scroll"}
               >
-                {isPaused ? "▶ Resume" : "⏸ Pause"}
+                {isPaused ? (
+                  <>
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Resume</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-3 h-3 fill-current" />
+                    <span>Pause</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -246,11 +251,9 @@ export function Reviews() {
                 {/* Card Header matching User Reference */}
                 <div className="flex items-start justify-between mb-3.5">
                   <div className="flex items-center space-x-3">
-                    {/* Round Avatar */}
-                    <div
-                      className={`w-11 h-11 rounded-full ${item.avatarBg} text-white font-bold text-sm flex items-center justify-center shadow-sm shrink-0`}
-                    >
-                      {item.avatarText}
+                    {/* User Silhouette / Profile Logo Badge */}
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#F2EDE4] border border-[#DDD3C4] flex items-center justify-center text-[#3D4B3F] shrink-0 shadow-xs">
+                      <User className="w-5 h-5 text-[#3D4B3F]/85" />
                     </div>
 
                     {/* Author & Date */}
@@ -263,14 +266,16 @@ export function Reviews() {
                       </p>
                       
                       {/* Star Rating */}
-                      <div className="flex items-center space-x-0.5 mt-1 text-[#F59E0B] text-sm">
+                      <div className="flex items-center space-x-0.5 mt-1 text-[#F59E0B]">
                         {Array.from({ length: 5 }).map((_, sIdx) => (
-                          <span
+                          <Star
                             key={sIdx}
-                            className={sIdx < item.rating ? "text-[#F59E0B]" : "text-gray-300"}
-                          >
-                            ★
-                          </span>
+                            className={`w-3.5 h-3.5 ${
+                              sIdx < item.rating
+                                ? "fill-[#F59E0B] text-[#F59E0B]"
+                                : "text-gray-300"
+                            }`}
+                          />
                         ))}
                       </div>
                     </div>
@@ -310,8 +315,8 @@ export function Reviews() {
 
               {/* Bottom Badge */}
               <div className="mt-4 pt-3 border-t border-[#E7DDCE]/70 flex items-center justify-between text-[10.5px]">
-                <span className="text-[#31483A] font-semibold flex items-center space-x-1">
-                  <span className="text-[#25D366]">✓</span>
+                <span className="text-[#31483A] font-semibold flex items-center space-x-1.5">
+                  <Check className="w-3.5 h-3.5 text-[#25D366] stroke-[2.5]" />
                   <span>{item.badge || "Verified Guest"}</span>
                 </span>
                 <span className="text-[#B18A5A] font-medium">

@@ -154,31 +154,31 @@ export function Rooms() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch">
             
             {/* Left: 10x Interactive High-Res Gallery Showcase (7 cols) */}
-            <div className="lg:col-span-7 p-4 sm:p-6 md:p-8 bg-[#14231A] flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-7 p-3.5 xs:p-5 sm:p-6 md:p-8 bg-[#14231A] flex flex-col justify-between relative overflow-hidden">
               
-              {/* Top Controls Header */}
-              <div className="flex items-center justify-between text-xs text-[#FFFCF7]/90 mb-3.5 z-10 px-1">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#E7DDCE]">
-                    Interactive Gallery
+              {/* Top Controls Header (Fully Responsive on All Screen Sizes) */}
+              <div className="flex items-center justify-between text-xs text-[#FFFCF7]/90 mb-3 z-10 px-0.5 sm:px-1 gap-1.5 flex-nowrap overflow-x-auto no-scrollbar">
+                <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="text-[9.5px] xs:text-[10px] sm:text-[11px] font-bold tracking-wider sm:tracking-widest uppercase text-[#E7DDCE] whitespace-nowrap">
+                    <span className="hidden xs:inline">Interactive </span>Gallery
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="px-3 py-1 rounded-full bg-[#1B2E24]/80 hover:bg-[#31483A] text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center space-x-1.5 text-white border border-[#E7DDCE]/30 backdrop-blur-md cursor-pointer shadow-sm"
+                    className="px-2 xs:px-2.5 sm:px-3 py-1 rounded-full bg-[#1B2E24]/80 hover:bg-[#31483A] text-[9px] xs:text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center space-x-1 sm:space-x-1.5 text-white border border-[#E7DDCE]/30 backdrop-blur-md cursor-pointer shadow-sm active:scale-95 shrink-0"
                     title={isPlaying ? "Pause auto slide" : "Play auto slide"}
                   >
                     {isPlaying ? (
                       <>
-                        <Pause className="w-3 h-3 fill-current" />
+                        <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0" />
                         <span>Pause</span>
                       </>
                     ) : (
                       <>
-                        <Play className="w-3 h-3 fill-current" />
+                        <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0" />
                         <span>Play</span>
                       </>
                     )}
@@ -186,13 +186,13 @@ export function Rooms() {
                   <button
                     type="button"
                     onClick={() => setLightboxOpen(true)}
-                    className="px-3 py-1 rounded-full bg-[#1B2E24]/80 hover:bg-[#31483A] text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center space-x-1.5 text-white border border-[#E7DDCE]/30 backdrop-blur-md cursor-pointer shadow-sm"
+                    className="px-2 xs:px-2.5 sm:px-3 py-1 rounded-full bg-[#1B2E24]/80 hover:bg-[#31483A] text-[9px] xs:text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center space-x-1 sm:space-x-1.5 text-white border border-[#E7DDCE]/30 backdrop-blur-md cursor-pointer shadow-sm active:scale-95 shrink-0"
                     title="Open Fullscreen Lightbox"
                   >
-                    <Maximize2 className="w-3 h-3" />
+                    <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
                     <span>Full View</span>
                   </button>
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#1B2E24]/80 text-[#E7DDCE] border border-[#E7DDCE]/30 backdrop-blur-md">
+                  <span className="text-[10px] sm:text-[11px] font-mono px-2 sm:px-2.5 py-0.5 rounded-full bg-[#1B2E24]/80 text-[#E7DDCE] border border-[#E7DDCE]/30 backdrop-blur-md shrink-0">
                     0{activePhotoIndex + 1} / 0{roomPhotos.length}
                   </span>
                 </div>
@@ -200,7 +200,7 @@ export function Rooms() {
 
               {/* Main Photo Cinema Stage with Warm Luxury Curves & Refined Linen/Brass Border */}
               <div
-                className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-[#B18A5A]/35 group cursor-pointer"
+                className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-[20px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-[#B18A5A]/35 group cursor-pointer"
                 onClick={() => setLightboxOpen(true)}
               >
                 {/* 1. Crisp Full-Bleed High-Res Image */}
@@ -225,10 +225,10 @@ export function Rooms() {
                     e.stopPropagation();
                     handlePrevPhoto();
                   }}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#14231A]/80 hover:bg-[#B18A5A] text-white flex items-center justify-center backdrop-blur-md border border-[#E7DDCE]/30 transition-all opacity-90 group-hover:opacity-100 shadow-xl hover:scale-105 cursor-pointer"
+                  className="absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-[#14231A]/80 hover:bg-[#B18A5A] text-white flex items-center justify-center backdrop-blur-md border border-[#E7DDCE]/30 transition-all opacity-90 group-hover:opacity-100 shadow-xl hover:scale-105 cursor-pointer"
                   aria-label="Previous photo"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
@@ -240,26 +240,26 @@ export function Rooms() {
                     e.stopPropagation();
                     handleNextPhoto();
                   }}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#14231A]/80 hover:bg-[#B18A5A] text-white flex items-center justify-center backdrop-blur-md border border-[#E7DDCE]/30 transition-all opacity-90 group-hover:opacity-100 shadow-xl hover:scale-105 cursor-pointer"
+                  className="absolute right-2.5 sm:right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-[#14231A]/80 hover:bg-[#B18A5A] text-white flex items-center justify-center backdrop-blur-md border border-[#E7DDCE]/30 transition-all opacity-90 group-hover:opacity-100 shadow-xl hover:scale-105 cursor-pointer"
                   aria-label="Next photo"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
 
                 {/* Bottom Caption Overlay */}
-                <div className="absolute bottom-0 inset-x-0 z-20 p-4 sm:p-5 flex items-end justify-between">
-                  <div className="max-w-[85%]">
-                    <span className="block text-[10px] uppercase tracking-wider font-bold text-[#E7DDCE] mb-0.5">
+                <div className="absolute bottom-0 inset-x-0 z-20 p-3 sm:p-5 flex items-end justify-between gap-2">
+                  <div className="max-w-[78%] xs:max-w-[85%]">
+                    <span className="block text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[#E7DDCE] mb-0.5">
                       Naka’s Cottage Showcase
                     </span>
-                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white drop-shadow-md leading-tight">
+                    <h4 className="text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white drop-shadow-md leading-tight line-clamp-1 xs:line-clamp-none">
                       {roomPhotos[activePhotoIndex]?.caption}
                     </h4>
                   </div>
-                  <span className="text-[10px] text-[#E7DDCE] bg-[#14231A]/80 border border-[#E7DDCE]/30 px-3 py-1 rounded-full backdrop-blur-md shrink-0 font-medium shadow-sm">
-                    Click to zoom
+                  <span className="text-[9px] sm:text-[10px] text-[#E7DDCE] bg-[#14231A]/80 border border-[#E7DDCE]/30 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full backdrop-blur-md shrink-0 font-medium shadow-sm">
+                    Zoom
                   </span>
                 </div>
 

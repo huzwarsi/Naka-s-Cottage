@@ -77,6 +77,8 @@ export function Hero() {
   const [quickCheckOut, setQuickCheckOut] = useState("");
   const [quickGuests, setQuickGuests] = useState(2);
   const [quickRoom, setQuickRoom] = useState(rooms[0]?.id || "entire-a-frame-chalet");
+  const [guestsDropdownOpen, setGuestsDropdownOpen] = useState(false);
+  const [datesDropdownOpen, setDatesDropdownOpen] = useState(false);
 
   const whatsappDisplay = (contact as any)?.whatsappNumber || "995597123880";
   const whatsappRaw = getWhatsAppRawDigits(whatsappDisplay);
@@ -116,7 +118,7 @@ export function Hero() {
     >
       {/* Outer Rounded Luxury Frame matching user reference */}
       <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden min-h-[82vh] sm:min-h-[88vh] flex flex-col justify-between p-5 sm:p-8 md:p-12 shadow-2xl border border-[#E7DDCE]">
-        
+
         {/* =========================================================================
             SLIDESHOW BACKGROUND (Clear, crisp high-res natural images with soft vignette)
            ========================================================================= */}
@@ -126,9 +128,8 @@ export function Hero() {
             return (
               <div
                 key={slide.url}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                  isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-                }`}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                  }`}
               >
                 <Image
                   src={slide.url}
@@ -138,9 +139,8 @@ export function Hero() {
                   loading={index === 0 ? "eager" : "lazy"}
                   sizes="100vw"
                   quality={95}
-                  className={`object-cover object-center transform transition-transform duration-[6000ms] ease-out ${
-                    isActive ? "scale-105" : "scale-100"
-                  }`}
+                  className={`object-cover object-center transform transition-transform duration-[6000ms] ease-out ${isActive ? "scale-105" : "scale-100"
+                    }`}
                 />
               </div>
             );
@@ -201,11 +201,10 @@ export function Hero() {
                   key={slide.url}
                   type="button"
                   onClick={() => setActiveSlide(idx)}
-                  className={`transition-all duration-300 rounded-full h-2 ${
-                    activeSlide === idx
+                  className={`transition-all duration-300 rounded-full h-2 ${activeSlide === idx
                       ? "w-6 bg-white shadow-sm"
                       : "w-2 bg-white/45 hover:bg-white/80 cursor-pointer"
-                  }`}
+                    }`}
                   aria-label={`Slide ${idx + 1}: ${slide.title}`}
                   title={slide.title}
                 />
@@ -251,83 +250,209 @@ export function Hero() {
         {/* =========================================================================
             BOTTOM: LUXURY FLOATING SEGMENTED BOOKING PILL (Belmond / Airbnb Luxe Style)
            ========================================================================= */}
-        <div className="relative z-20 max-w-4xl mx-auto w-full">
-          <div className="bg-[#FFFCF7]/95 backdrop-blur-xl text-[#1B2E24] rounded-[24px] sm:rounded-full p-2 sm:p-2.5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.45)] border-2 border-white/90">
+        <div className="relative z-30 max-w-4xl mx-auto w-full">
+          {/* Backdrop click to dismiss dropdowns */}
+          {(guestsDropdownOpen || datesDropdownOpen) && (
+            <div
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-xs"
+              onClick={() => {
+                setGuestsDropdownOpen(false);
+                setDatesDropdownOpen(false);
+              }}
+            />
+          )}
+
+          <div className="relative z-50 bg-[#FFFCF7]/95 backdrop-blur-xl text-[#1B2E24] rounded-[24px] sm:rounded-full p-2 sm:p-2.5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.45)] border-2 border-white/90">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-1">
-              
+
               {/* Field 1: Guests Segment */}
-              <div className="relative group/guests flex items-center px-4 py-2.5 sm:py-2 rounded-2xl sm:rounded-full hover:bg-black/[0.04] transition-colors cursor-pointer flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#F3EFE6] flex items-center justify-center shrink-0 mr-3 border border-[#E7DDCE]">
-                  <Users className="w-4 h-4 text-[#31483A]" />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C]">
-                    Guests
-                  </span>
-                  <span className="block text-xs sm:text-[13px] font-bold text-[#1B2E24] truncate">
-                    {quickGuests === 1
-                      ? "1 Guest"
-                      : quickGuests === 2
-                      ? "2 Guests (Couple)"
-                      : quickGuests <= 4
-                      ? `${quickGuests} Guests`
-                      : "6 Guests (Entire Chalet)"}
-                  </span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-[#8A7E72] group-hover/guests:text-[#1B2E24] transition-colors shrink-0 ml-1.5" />
-                <select
-                  value={quickGuests}
-                  onChange={(e) => setQuickGuests(parseInt(e.target.value, 10))}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  title="Select number of guests"
+              <div className="relative flex-1 min-w-0">
+                <div
+                  onClick={() => {
+                    setGuestsDropdownOpen(!guestsDropdownOpen);
+                    setDatesDropdownOpen(false);
+                  }}
+                  className="group/guests flex items-center px-4 py-2.5 sm:py-2 rounded-2xl sm:rounded-full hover:bg-black/[0.04] transition-colors cursor-pointer w-full"
                 >
-                  <option value={1}>1 Guest (Solo Traveler)</option>
-                  <option value={2}>2 Guests (Couple / Romantic Stay)</option>
-                  <option value={3}>3 Guests</option>
-                  <option value={4}>4 Guests (Family / Friends)</option>
-                  <option value={6}>6 Guests (Entire Private Chalet)</option>
-                </select>
+                  <div className="w-9 h-9 rounded-full bg-[#F3EFE6] flex items-center justify-center shrink-0 mr-3 border border-[#E7DDCE]">
+                    <Users className="w-4 h-4 text-[#31483A]" />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C]">
+                      Guests
+                    </span>
+                    <span className="block text-xs sm:text-[13px] font-bold text-[#1B2E24] truncate">
+                      {quickGuests === 1
+                        ? "1 Guest (Solo)"
+                        : quickGuests === 2
+                          ? "2 Guests (Couple)"
+                          : quickGuests <= 4
+                            ? `${quickGuests} Guests`
+                            : "6 Guests (Entire Chalet)"}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-[#8A7E72] group-hover/guests:text-[#1B2E24] transition-transform duration-200 shrink-0 ml-1.5 ${guestsDropdownOpen ? "rotate-180 text-[#1B2E24]" : ""}`} />
+                </div>
+
+                {/* Custom Luxury Guests Popover */}
+                {guestsDropdownOpen && (
+                  <div className="absolute bottom-full left-0 mb-3 z-50 w-72 max-w-[calc(100vw-5rem)] sm:w-80 bg-[#FFFCF7] rounded-[24px] p-5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] border border-[#E7DDCE]">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#E7DDCE] mb-4">
+                      <div>
+                        <h4 className="font-bold text-sm text-[#1B2E24]">Select Guests</h4>
+                        <span className="text-[11px] text-[#6D7168]">Up to 6 guests max</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setQuickGuests(Math.max(1, quickGuests - 1))}
+                          className="w-8 h-8 rounded-full border border-[#E7DDCE] bg-[#F6F2EA] hover:bg-[#31483A] hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="font-bold text-base w-6 text-center text-[#1B2E24]">
+                          {quickGuests}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setQuickGuests(Math.min(6, quickGuests + 1))}
+                          className="w-8 h-8 rounded-full border border-[#E7DDCE] bg-[#F6F2EA] hover:bg-[#31483A] hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {[
+                        { label: "1 Guest", val: 1 },
+                        { label: "2 Guests (Couple)", val: 2 },
+                        { label: "4 Guests (Family)", val: 4 },
+                        { label: "6 Guests (Full)", val: 6 },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
+                          type="button"
+                          onClick={() => setQuickGuests(item.val)}
+                          className={`px-3 py-2 text-xs font-semibold rounded-xl border text-left transition-all ${quickGuests === item.val
+                              ? "bg-[#31483A] text-white border-[#31483A]"
+                              : "bg-[#F6F2EA]/60 text-[#1B2E24] border-[#E7DDCE] hover:border-[#B18A5A]"
+                            }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setGuestsDropdownOpen(false)}
+                      className="w-full py-2.5 rounded-full bg-[#1B2E24] hover:bg-[#31483A] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Vertical Hairline Divider */}
               <div className="hidden sm:block h-9 w-[1px] bg-[#E7DDCE]" />
 
               {/* Field 2: Dates Segment */}
-              <div className="relative group/dates flex items-center px-4 py-2.5 sm:py-2 rounded-2xl sm:rounded-full hover:bg-black/[0.04] transition-colors cursor-pointer flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#F3EFE6] flex items-center justify-center shrink-0 mr-3 border border-[#E7DDCE]">
-                  <CalendarDays className="w-4 h-4 text-[#31483A]" />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <span className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C]">
-                    Dates
-                  </span>
-                  <span className="block text-xs sm:text-[13px] font-bold text-[#1B2E24] truncate">
-                    {quickCheckIn && quickCheckOut
-                      ? `${quickCheckIn} — ${quickCheckOut}`
-                      : quickCheckIn
-                      ? `From ${quickCheckIn}`
-                      : "Add check-in & check-out"}
-                  </span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-[#8A7E72] group-hover/dates:text-[#1B2E24] transition-colors shrink-0 ml-1.5" />
-                {/* Transparent overlays for seamless native datepicker interaction */}
-                <div className="absolute inset-0 opacity-0 flex cursor-pointer">
-                  <input
-                    type="date"
-                    value={quickCheckIn}
-                    onChange={(e) => setQuickCheckIn(e.target.value)}
-                    className="w-1/2 h-full cursor-pointer"
-                    title="Select check-in date"
-                  />
-                  <input
-                    type="date"
-                    value={quickCheckOut}
-                    min={quickCheckIn}
-                    onChange={(e) => setQuickCheckOut(e.target.value)}
-                    className="w-1/2 h-full cursor-pointer"
-                    title="Select check-out date"
-                  />
-                </div>
+              <div className="relative flex-1 min-w-0">
+                <button
+                  type="button"
+                  aria-expanded={datesDropdownOpen}
+                  aria-controls="hero-stay-dates"
+                  onClick={() => {
+                    setDatesDropdownOpen(!datesDropdownOpen);
+                    setGuestsDropdownOpen(false);
+                  }}
+                  className="group/dates flex items-center px-4 py-2.5 sm:py-2 rounded-2xl sm:rounded-full hover:bg-black/[0.04] transition-colors cursor-pointer w-full"
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#F3EFE6] flex items-center justify-center shrink-0 mr-3 border border-[#E7DDCE]">
+                    <CalendarDays className="w-4 h-4 text-[#31483A]" />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C]">
+                      Dates
+                    </span>
+                    <span className="block text-xs sm:text-[13px] font-bold text-[#1B2E24] truncate">
+                      {quickCheckIn && quickCheckOut
+                        ? `${quickCheckIn} — ${quickCheckOut}`
+                        : quickCheckIn
+                          ? `Check-in: ${quickCheckIn}`
+                          : "Add check-in & check-out"}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-[#8A7E72] group-hover/dates:text-[#1B2E24] transition-transform duration-200 shrink-0 ml-1.5 ${datesDropdownOpen ? "rotate-180 text-[#1B2E24]" : ""}`} />
+                </button>
+
+                {/* Custom Luxury Dates Popover */}
+                {datesDropdownOpen && (
+                  <div id="hero-stay-dates" role="region" aria-label="Stay dates" className="absolute bottom-full left-0 sm:left-auto sm:right-0 mb-3 z-50 w-full sm:w-[350px] max-w-[calc(100vw-5rem)] max-h-[65dvh] overflow-y-auto bg-[#FFFCF7] rounded-[24px] p-5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] border border-[#E7DDCE]">
+                    <div className="pb-3 border-b border-[#E7DDCE] mb-4">
+                      <h4 className="font-bold text-sm text-[#1B2E24]">Stay Dates</h4>
+                      <span className="text-[11px] text-[#6D7168]">Select your arrival &amp; departure</span>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C] mb-1">
+                          Check-in Date
+                        </label>
+                        <input
+                          type="date"
+                          value={quickCheckIn}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) => {
+                            setQuickCheckIn(e.target.value);
+                            if (quickCheckOut && e.target.value >= quickCheckOut) {
+                              const nextDay = new Date(e.target.value);
+                              nextDay.setDate(nextDay.getDate() + 1);
+                              setQuickCheckOut(nextDay.toISOString().split("T")[0]);
+                            }
+                          }}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7DDCE] bg-[#F6F2EA] text-xs font-semibold text-[#1B2E24] focus:outline-none focus:border-[#31483A]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-wider font-extrabold text-[#7D766C] mb-1">
+                          Check-out Date
+                        </label>
+                        <input
+                          type="date"
+                          value={quickCheckOut}
+                          min={quickCheckIn || new Date().toISOString().split("T")[0]}
+                          onChange={(e) => setQuickCheckOut(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7DDCE] bg-[#F6F2EA] text-xs font-semibold text-[#1B2E24] focus:outline-none focus:border-[#31483A]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickCheckIn("");
+                          setQuickCheckOut("");
+                        }}
+                        className="flex-1 py-2 rounded-full border border-[#E7DDCE] text-xs font-semibold text-[#6D7168] hover:text-[#1B2E24] hover:bg-[#F6F2EA] transition-colors"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDatesDropdownOpen(false)}
+                        className="flex-1 py-2 rounded-full bg-[#1B2E24] hover:bg-[#31483A] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+                      >
+                        Apply Dates
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Vertical Hairline Divider */}

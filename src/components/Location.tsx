@@ -14,12 +14,13 @@ export function Location() {
     <section
       id="location"
       aria-labelledby="location-heading"
-      className="py-14 sm:py-20 md:py-24 bg-[#F6F2EA] border-t border-[#E7DDCE]"
+      className="px-3 sm:px-6 lg:px-8 py-10 sm:py-16 bg-[#F6F2EA]"
     >
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
+      {/* Outer Rounded Luxury Frame matching Gallery & Rooms */}
+      <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden bg-[#FFFCF7] p-6 sm:p-10 md:p-12 shadow-2xl border border-[#E7DDCE] max-w-[1360px] mx-auto">
         
         {/* Header */}
-        <div className="max-w-3xl mb-8 sm:mb-12">
+        <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="flex items-center space-x-2 mb-2">
             <span className="w-6 sm:w-8 h-[2px] bg-[#B18A5A]" />
             <span className="text-[10px] sm:text-xs uppercase tracking-[0.22em] font-bold text-[#B18A5A]">
@@ -45,40 +46,42 @@ export function Location() {
           <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
             
             {/* Address Card */}
-            <div className="bg-[#FFFCF7] p-5 sm:p-6 rounded-2xl border border-[#E7DDCE] shadow-sm">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#25D366]" />
-                <span className="text-[10px] uppercase tracking-wider font-bold text-[#1B2E24]">
+            <div className="bg-[#F6F2EA]/80 p-6 rounded-[22px] sm:rounded-[26px] border border-[#E7DDCE] shadow-xs hover:border-[#B18A5A] transition-all">
+              <div className="flex items-center space-x-2 mb-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#25D366] animate-pulse" />
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#1B2E24]">
                   Exact Cottage Address
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-[#1B2E24] font-semibold leading-relaxed mb-1">
+              <p className="text-sm sm:text-base text-[#1B2E24] font-bold leading-relaxed mb-1.5">
                 {location.displayAddress || "65A, Unknown Heroes Street, Tbilisi 0178, Georgia"}
               </p>
-              <p className="text-[11px] text-[#6D7168] leading-normal">
-                Tbilisi, Georgia • Coordinates: 41.7645° N, 44.8082° E
-              </p>
+              <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#E7DDCE]/50 text-[10.5px] text-[#6D7168] font-mono">
+                <span>41.7645° N, 44.8082° E</span>
+                <span>&bull;</span>
+                <span>Tbilisi Lake Shore</span>
+              </div>
             </div>
 
             {/* Arrival & Smart Check-in */}
-            <div className="bg-[#FFFCF7] p-5 sm:p-6 rounded-2xl border border-[#E7DDCE] shadow-sm space-y-3">
+            <div className="bg-[#F6F2EA]/80 p-6 rounded-[22px] sm:rounded-[26px] border border-[#E7DDCE] shadow-xs hover:border-[#B18A5A] transition-all space-y-3">
               <div>
-                <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#1B2E24] block mb-1">
+                <span className="text-[10px] uppercase tracking-[0.18em] font-extrabold text-[#1B2E24] block mb-1">
                   Access &amp; Smart Check-In
                 </span>
-                <p className="text-xs text-[#6D7168] leading-relaxed">
-                  Private gated territory with automated keypad code. Arrive at any time after 14:00 with 100% contactless self check-in.
+                <p className="text-xs sm:text-[13px] text-[#6D7168] leading-relaxed">
+                  Private gated territory with automated digital keypad lock. Arrive anytime after 14:00 with effortless 100% contactless self check-in.
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-[#E7DDCE] space-y-1.5 text-[11px] text-[#31483A]">
-                <div className="flex items-center space-x-2 font-medium">
-                  <Check className="w-3.5 h-3.5 text-[#B18A5A] shrink-0 stroke-[2.5]" />
+              <div className="pt-3 border-t border-[#E7DDCE] space-y-2 text-xs text-[#31483A]">
+                <div className="flex items-center space-x-2.5 font-semibold">
+                  <Check className="w-4 h-4 text-[#B18A5A] shrink-0 stroke-[2.5]" />
                   <span>Free secure private parking inside gated courtyard</span>
                 </div>
-                <div className="flex items-center space-x-2 font-medium">
-                  <Check className="w-3.5 h-3.5 text-[#B18A5A] shrink-0 stroke-[2.5]" />
-                  <span>Easy taxi &amp; Bolt / Yandex access from city center</span>
+                <div className="flex items-center space-x-2.5 font-semibold">
+                  <Check className="w-4 h-4 text-[#B18A5A] shrink-0 stroke-[2.5]" />
+                  <span>Easy taxi &amp; Bolt / Yandex access from city center (15-20 min)</span>
                 </div>
               </div>
             </div>
@@ -92,7 +95,7 @@ export function Location() {
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shimmer-btn inline-flex items-center justify-center space-x-2.5 w-full py-3.5 px-6 rounded-full text-xs uppercase tracking-[0.16em] font-bold text-[#FFFCF7] shadow-sm hover:shadow-md transition-all duration-300"
+                className="inline-flex items-center justify-center space-x-2.5 w-full py-4 px-6 rounded-full text-xs uppercase tracking-[0.18em] font-bold text-white bg-[#1B2E24] hover:bg-[#31483A] shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.01]"
               >
                 <span>Open in Google Maps App</span>
                 <ExternalLink className="w-4 h-4 shrink-0" />
@@ -103,17 +106,23 @@ export function Location() {
 
           {/* Embedded Google Map (7 cols) */}
           <div className="lg:col-span-7 flex">
-            <div className="w-full min-h-[340px] sm:min-h-[420px] rounded-2xl overflow-hidden border border-[#E7DDCE] shadow-md bg-[#FFFCF7] relative">
+            <div className="w-full min-h-[380px] sm:min-h-[460px] rounded-[24px] sm:rounded-[30px] overflow-hidden border border-[#E7DDCE] shadow-lg bg-[#F6F2EA] relative">
+              {/* Floating Pill on Map */}
+              <div className="absolute top-4 left-4 z-10 px-3.5 py-1.5 rounded-full bg-[#1B2E24]/90 backdrop-blur-md text-[#E7DDCE] text-xs font-semibold border border-[#E7DDCE]/30 shadow-md flex items-center space-x-2 pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Naka’s Cottage &bull; Tbilisi Lake Shore</span>
+              </div>
+
               <iframe
                 title="Naka's Cottage Location Map"
                 src={mapEmbedSrc}
                 width="100%"
                 height="100%"
-                style={{ border: 0, minHeight: "340px" }}
+                style={{ border: 0, minHeight: "380px" }}
                 allowFullScreen={true}
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
-                className="w-full h-full rounded-2xl"
+                className="w-full h-full rounded-[24px] sm:rounded-[30px]"
               />
             </div>
           </div>

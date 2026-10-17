@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId, useSyncExternalStore } from "react";
+import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { useHotel } from "@/context/HotelContext";
 import { formatPhoneNumber } from "@/lib/formatPhone";
 
@@ -24,26 +24,46 @@ interface FormErrors {
   guests?: string;
 }
 
+type SubmissionState = {
+  status: "idle" | "ready-to-send" | "submitting" | "demo-notice";
+  actionType?: "mailto" | "whatsapp" | "demo" | "endpoint";
+  url?: string;
+};
+
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const addDaysToDate = (dateString: string, days: number) => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return getLocalDateString(date);
+};
+
 export function InquiryForm() {
   const hotel = useHotel();
   const { inquiry, rooms, name: hotelName, contact } = hotel;
 
   const whatsappDisplay = (contact as any)?.whatsappNumber || "995597123880";
-  const whatsappRaw = whatsappDisplay.replace(/[^0-9]/g, "");
+  const whatsappRaw = String(whatsappDisplay).replace(/[^0-9]/g, "");
   const formattedPhone = formatPhoneNumber(whatsappDisplay);
 
-  // Form IDs for accessibility
   const nameId = useId();
   const emailId = useId();
   const arrivalId = useId();
   const departureId = useId();
   const guestsId = useId();
+  const roomId = useId();
   const messageId = useId();
 
-  // Safely obtain today's date string on the client without cascading renders
+  // Local date avoids UTC timezone issues that can make today's date appear as yesterday.
   const todayStr = useSyncExternalStore(
     emptySubscribe,
-    () => new Date().toISOString().split("T")[0],
+    () => getLocalDateString(),
     () => ""
   );
 
@@ -58,24 +78,25 @@ export function InquiryForm() {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submissionState, setSubmissionState] = useState<{
-    status: "idle" | "ready-to-send" | "submitting" | "demo-notice";
-    actionType?: "mailto" | "whatsapp" | "demo" | "endpoint";
-    url?: string;
-  }>({ status: "idle" });
+  const [submissionState, setSubmissionState] = useState<SubmissionState>({
+    status: "idle",
+  });
 
-  // Listen for room preselection from URL hash or search params
   useEffect(() => {
     const checkHashForRoom = () => {
       const hash = window.location.hash;
-      if (hash.includes("room=")) {
-        const roomIdParam = hash.split("room=")[1]?.split("&")[0];
-        if (roomIdParam && rooms.some((r) => r.id === decodeURIComponent(roomIdParam))) {
-          setFormData((prev) => ({
-            ...prev,
-            roomPreference: decodeURIComponent(roomIdParam),
-          }));
+      if (!hash.includes("room=")) return;
+
+      const roomIdParam = hash.split("room=")[1]?.split("&")[0];
+      if (!roomIdParam) return;
+
+      try {
+        const decodedRoomId = decodeURIComponent(roomIdParam);
+        if (rooms.some((room) => room.id === decodedRoomId)) {
+          setFormData((prev) => ({ ...prev, roomPreference: decodedRoomId }));
         }
+      } catch {
+        // Ignore malformed URL fragments.
       }
     };
 
@@ -84,574 +105,436 @@ export function InquiryForm() {
     return () => window.removeEventListener("hashchange", checkHashForRoom);
   }, [rooms]);
 
-  // Handle Arrival change: if Departure <= Arrival, adjust or clear Departure
-  const handleArrivalChange = (newArrival: string) => {
+  const stayNights = (() => {
+    if (!formData.arrival || !formData.departure) return null;
+    const start = new Date(`${formData.arrival}T00:00:00`);
+    const end = new Date(`${formData.departure}T00:00:00`);
+    const days = Math.round((end.getTime() - start.getTime()) / 86400000);
+    return days > 0 ? days : null;
+  })();
+
+  const handleArrivalChange = (arrival: string) => {
     setFormData((prev) => {
-      const updated = { ...prev, arrival: newArrival };
-      if (prev.departure && prev.departure <= newArrival) {
-        const arrDate = new Date(newArrival);
-        if (!isNaN(arrDate.getTime())) {
-          arrDate.setDate(arrDate.getDate() + 1);
-          updated.departure = arrDate.toISOString().split("T")[0];
-        } else {
-          updated.departure = "";
-        }
+      const next = { ...prev, arrival };
+      if (prev.departure && prev.departure <= arrival) {
+        next.departure = addDaysToDate(arrival, 1);
       }
-      return updated;
+      return next;
     });
 
-    if (errors.arrival || errors.departure) {
-      setErrors((prev) => ({ ...prev, arrival: undefined, departure: undefined }));
-    }
+    setErrors((prev) => ({ ...prev, arrival: undefined, departure: undefined }));
   };
-
-  // Calculate estimated nights and price
-  const calculateStayEstimate = () => {
-    if (!formData.arrival || !formData.departure) return null;
-    const d1 = new Date(formData.arrival);
-    const d2 = new Date(formData.departure);
-    const diffTime = d2.getTime() - d1.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return null;
-
-    const selectedRoom = rooms.find((r) => r.id === formData.roomPreference);
-    if (!selectedRoom?.rate) return { nights: diffDays, total: null };
-
-    // Extract numeric rate e.g. "From $240 / night" -> 240
-    const match = selectedRoom.rate.match(/\$(\d+)/);
-    const rateNum = match ? parseInt(match[1], 10) : null;
-    const total = rateNum ? rateNum * diffDays : null;
-
-    return { nights: diffDays, total, rateNum };
-  };
-
-  const stayEstimate = calculateStayEstimate();
 
   const validate = (): boolean => {
-    const newErrors: FormErrors = {};
+    const nextErrors: FormErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Please enter your full name.";
-    }
-
+    if (!formData.name.trim()) nextErrors.name = "Enter your name.";
     if (!formData.email.trim()) {
-      newErrors.email = "Please enter your email address.";
+      nextErrors.email = "Enter your email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Please enter a valid email address.";
+      nextErrors.email = "Enter a valid email.";
     }
 
     if (!formData.arrival) {
-      newErrors.arrival = "Please select your arrival date.";
+      nextErrors.arrival = "Choose check-in.";
+    } else if (todayStr && formData.arrival < todayStr) {
+      nextErrors.arrival = "Check-in cannot be in the past.";
     }
 
     if (!formData.departure) {
-      newErrors.departure = "Please select your departure date.";
+      nextErrors.departure = "Choose check-out.";
     } else if (formData.arrival && formData.departure <= formData.arrival) {
-      newErrors.departure = "Departure date must be after arrival date.";
+      nextErrors.departure = "Check-out must be after check-in.";
     }
 
     if (!formData.guests || formData.guests < 1) {
-      newErrors.guests = "Guest count must be at least 1.";
-    } else if (formData.guests > 12) {
-      newErrors.guests = "For group bookings over 12 guests, please contact us directly.";
+      nextErrors.guests = "Select at least 1 guest.";
+    } else if (formData.guests > 6) {
+      nextErrors.guests = "For more than 6 guests, contact the property directly.";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!validate()) return;
 
-    if (!validate()) {
-      return;
-    }
-
-    const selectedRoomName =
-      rooms.find((r) => r.id === formData.roomPreference)?.name || "No specific room selected";
+    const selectedRoom =
+      rooms.find((room) => room.id === formData.roomPreference)?.name ||
+      "Entire accommodation";
 
     const inquiryText = [
-      `Stay Enquiry for ${hotelName}`,
-      `----------------------------------------`,
-      `Name: ${formData.name}`,
-      `Email: ${formData.email}`,
-      `Arrival Date: ${formData.arrival}`,
-      `Departure Date: ${formData.departure}`,
-      stayEstimate ? `Duration: ${stayEstimate.nights} night(s)` : "",
+      `Stay enquiry — ${hotelName}`,
+      `Name: ${formData.name.trim()}`,
+      `Email: ${formData.email.trim()}`,
+      `Check-in: ${formData.arrival}`,
+      `Check-out: ${formData.departure}`,
+      stayNights ? `Duration: ${stayNights} night(s)` : "",
       `Guests: ${formData.guests}`,
-      `Preferred Room: ${selectedRoomName}`,
-      stayEstimate?.total ? `Estimated Total: ~$${stayEstimate.total} USD (Illustrative)` : "",
-      formData.message ? `Special Requests:\n${formData.message}` : "",
-      `----------------------------------------`,
-      `Sent via ${hotelName} Website Enquiry Form`,
+      `Preferred accommodation: ${selectedRoom}`,
+      formData.message.trim() ? `Special requests: ${formData.message.trim()}` : "",
     ]
       .filter(Boolean)
       .join("\n");
 
     if (inquiry.destinationType === "mailto") {
-      const recipient = inquiry.contactEmail || "stay@kazbegiridge-demo.ge";
+      const recipient = inquiry.contactEmail || "nakascottage@gmail.com";
       const subject = encodeURIComponent(
-        `Stay Enquiry: ${formData.name} (${formData.arrival} to ${formData.departure})`
+        `Stay enquiry: ${formData.name.trim()} (${formData.arrival} to ${formData.departure})`
       );
-      const body = encodeURIComponent(inquiryText);
-      const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${body}`;
-
-      setSubmissionState({
-        status: "ready-to-send",
-        actionType: "mailto",
-        url: mailtoUrl,
-      });
+      const url = `mailto:${recipient}?subject=${subject}&body=${encodeURIComponent(inquiryText)}`;
+      setSubmissionState({ status: "ready-to-send", actionType: "mailto", url });
     } else if (inquiry.destinationType === "whatsapp") {
-      const number = inquiry.whatsappNumber || "";
-      const text = encodeURIComponent(inquiryText);
-      const whatsappUrl = `https://wa.me/${number}?text=${text}`;
-
-      setSubmissionState({
-        status: "ready-to-send",
-        actionType: "whatsapp",
-        url: whatsappUrl,
-      });
+      const number = String(inquiry.whatsappNumber || whatsappRaw).replace(/[^0-9]/g, "");
+      const url = `https://wa.me/${number}?text=${encodeURIComponent(inquiryText)}`;
+      setSubmissionState({ status: "ready-to-send", actionType: "whatsapp", url });
     } else if (inquiry.destinationType === "endpoint" && inquiry.endpointUrl) {
       setSubmissionState({ status: "submitting", actionType: "endpoint" });
+
       try {
-        const res = await fetch(inquiry.endpointUrl, {
+        const response = await fetch(inquiry.endpointUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         });
-        if (res.ok) {
-          setSubmissionState({
-            status: "ready-to-send",
-            actionType: "endpoint",
-          });
+
+        if (response.ok) {
+          setSubmissionState({ status: "ready-to-send", actionType: "endpoint" });
         } else {
-          alert("We were unable to deliver your enquiry right now. Please email us directly.");
+          alert("We couldn't send your enquiry. Please contact the property directly.");
           setSubmissionState({ status: "idle" });
         }
       } catch {
-        alert("Network error. Please email our team directly.");
+        alert("Network error. Please contact the property directly.");
         setSubmissionState({ status: "idle" });
       }
     } else {
-      setSubmissionState({
-        status: "demo-notice",
-        actionType: "demo",
-      });
+      setSubmissionState({ status: "demo-notice", actionType: "demo" });
     }
   };
 
-  const handleLaunchExternalApp = () => {
-    if (submissionState.url) {
-      window.location.href = submissionState.url;
-    }
+  const launchExternalApp = () => {
+    if (submissionState.url) window.location.href = submissionState.url;
   };
+
+  const inputClass =
+    "w-full rounded-xl border border-[#e5e0d5] bg-white px-4 py-3 text-sm text-[#26372d] outline-none transition placeholder:text-[#9a9b91] focus:border-[#526b58] focus:ring-4 focus:ring-[#526b58]/10";
+  const labelClass =
+    "mb-2 block text-xs uppercase tracking-wider font-extrabold text-[#1B2E24]";
 
   return (
     <section
       id="inquire"
       aria-labelledby="inquiry-heading"
-      className="py-14 sm:py-20 md:py-24 bg-[#FFFCF7] border-t border-[#E7DDCE] relative"
+      className="px-3 sm:px-6 lg:px-8 py-10 sm:py-16 bg-[#F6F2EA]"
     >
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
+      <div className="relative mx-auto max-w-[1360px] overflow-hidden rounded-[28px] border border-[#E7DDCE] bg-[#FFFCF7] p-6 shadow-2xl sm:rounded-[36px] sm:p-10 md:p-12">
+        <div className="mb-8 max-w-2xl sm:mb-12">
+          <div className="mb-2 flex items-center space-x-2">
+            <span className="h-[2px] w-6 bg-[#B18A5A] sm:w-8" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#B18A5A] sm:text-xs">
+              Reservations &amp; Inquiries
+            </span>
+          </div>
+          <h2
+            id="inquiry-heading"
+            className="mb-2.5 font-serif text-2xl font-bold leading-tight text-[#1B2E24] sm:text-3xl md:text-4xl"
+          >
+            Plan Your Stay at {hotelName || "Naka's Cottage"}
+          </h2>
+          <p className="text-xs font-normal leading-relaxed text-[#6D7168] sm:text-sm">
+            Send your preferred dates and guest details to ask about availability and the current rate.
+            Your reservation is not confirmed until the property replies.
+          </p>
+        </div>
 
-          {/* Context & Hospitality Notes (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between">
+        <div className="grid items-stretch gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-8">
+          <aside className="flex flex-col justify-between rounded-[24px] border border-[#31483A]/60 bg-[#14231A] p-6 text-white shadow-xl sm:rounded-[30px] sm:p-8">
             <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="w-6 sm:w-8 h-[2px] bg-[#B18A5A]" />
-                <span className="text-[10px] sm:text-xs uppercase tracking-[0.22em] font-bold text-[#B18A5A]">
-                  Direct Reservations
-                </span>
+              <div className="inline-flex items-center space-x-2 rounded-full border border-[#E7DDCE]/30 bg-white/10 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#E7DDCE]">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <span>{hotelName || "Naka's Cottage"}</span>
               </div>
-              <h2
-                id="inquiry-heading"
-                className="font-serif text-2xl sm:text-3xl md:text-4xl text-[#1B2E24] font-bold leading-tight mb-3"
-              >
-                Reserve Your Stay at {hotelName}
-              </h2>
-              <p className="text-xs sm:text-sm text-[#6D7168] font-normal leading-relaxed mb-5">
-                Select your check-in dates and preferred chalet option below. You can book instantly via WhatsApp on <strong className="text-[#1B2E24]">{formattedPhone}</strong> or submit an inquiry for fast 15-minute confirmation.
+              <h3 className="mt-4 font-serif text-2xl font-bold leading-tight text-white sm:text-3xl">
+                A Private Stay in Tbilisi
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-white/80 sm:text-sm">
+                Entire accommodation with approximately 104 m² of space, views toward Tbilisi Sea,
+                and a comfortable setting for families or small groups.
               </p>
 
-              {/* Dynamic Live Price Calculator Badge */}
-              {stayEstimate && (
-                <div className="p-5 rounded-sm bg-[#31483A] text-[#FFFCF7] border border-[#22352A] shadow-md mb-6 animate-fade-in">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#B18A5A] uppercase tracking-wider font-medium">Estimated Stay</span>
-                    <span className="bg-[#22352A] px-2 py-0.5 rounded text-[10px]">{stayEstimate.nights} night(s)</span>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                {[
+                  ["104 m²", "Accommodation"],
+                  ["Up to 6", "Guests"],
+                  ["Indoor pool", "Pool facility"],
+                  ["Free Wi-Fi", "Internet access"],
+                ].map(([value, label]) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-white/15 bg-white/[0.08] p-3.5 backdrop-blur-xs"
+                  >
+                    <p className="text-base font-bold text-white">{value}</p>
+                    <p className="mt-0.5 text-[11px] text-[#E7DDCE]">{label}</p>
                   </div>
-                  {stayEstimate.total ? (
-                    <div className="flex items-baseline space-x-2 mt-1">
-                      <span className="font-serif text-3xl font-medium text-[#FFFCF7]">~${stayEstimate.total}</span>
-                      <span className="text-xs text-[#FFFCF7]/70">USD estimated total</span>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#FFFCF7]/80 mt-1">Custom quote will be provided upon review</p>
-                  )}
-                  <p className="text-[10px] text-[#FFFCF7]/60 mt-2 italic">
-                    *Illustrative estimate. Confirmed rates provided directly by concierge.
-                  </p>
-                </div>
-              )}
+                ))}
+              </div>
 
-              {/* Honest Reservation Policy Notice */}
-              <div className="p-5 rounded-sm bg-[#F6F2EA] border border-[#E7DDCE] text-xs text-[#252A24] space-y-2 mb-8">
-                <p className="font-medium text-[#31483A] flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-[#31483A]" aria-hidden="true" />
-                  <span>Direct Guest Policy</span>
+              <div className="mt-6 border-t border-white/15 pt-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#B18A5A]">
+                  Property Amenities
                 </p>
-                <p className="text-[#6D7168] leading-relaxed">
-                  {inquiry.disclaimer}
+                <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs font-medium text-white/90">
+                  <li>✓ Indoor pool</li>
+                  <li>✓ Free Wi-Fi</li>
+                  <li>✓ Free parking</li>
+                  <li>✓ Balcony / terrace</li>
+                  <li>✓ Garden area</li>
+                  <li>✓ Tbilisi Sea views</li>
+                </ul>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-[#B18A5A]/40 bg-white/[0.07] p-4">
+                <span className="block text-[10.5px] font-bold uppercase tracking-wider text-[#E7DDCE]">
+                  Nightly Rate
+                </span>
+                <p className="mt-1 font-serif text-2xl font-bold text-white">
+                  Check current rates
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-white/70">
+                  Prices can vary by date, guest count, and availability. Contact the property for
+                  the exact quote before confirming your stay.
                 </p>
               </div>
             </div>
 
-            {/* Direct Contact Info & WhatsApp */}
-            <div className="pt-6 border-t border-[#E7DDCE] text-xs text-[#6D7168] space-y-3">
-              <p className="text-[#1B2E24] font-bold uppercase tracking-wider text-[11px]">
-                Instant Concierge Contact
-              </p>
-
-              {/* Direct WhatsApp Action Button */}
+            <div className="mt-8 border-t border-white/15 pt-6">
+              <span className="mb-2.5 block text-xs font-medium text-white/75">
+                Contact the property directly
+              </span>
               <a
                 href={`https://wa.me/${whatsappRaw}?text=${encodeURIComponent(
-                  `Hello! I am inquiring about room availability at ${hotelName}.`
+                  `Hello! I would like to check availability and current rates at ${hotelName || "Naka's Cottage"}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-[#FFFCF7] font-bold tracking-wide shadow-md transition-all duration-300 transform hover:scale-102"
+                className="inline-flex w-full transform items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:scale-[1.01] hover:bg-[#20bd5a]"
               >
-                <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                  <path d="M20.52 3.48A11.82 11.82 0 0 0 12.08 0C5.5 0 .15 5.35.15 11.93c0 2.1.55 4.15 1.6 5.96L.05 24l6.27-1.64a11.9 11.9 0 0 0 5.76 1.47h.01c6.58 0 11.93-5.35 11.93-11.93a11.85 11.85 0 0 0-3.5-8.42ZM12.09 21.8h-.01a9.87 9.87 0 0 1-5.03-1.37l-.36-.21-3.72.98.99-3.63-.23-.37a9.85 9.85 0 0 1-1.51-5.27c0-5.46 4.45-9.91 9.92-9.91a9.85 9.85 0 0 1 7.01 2.91 9.85 9.85 0 0 1 2.9 7.02c0 5.47-4.45 9.92-9.92 9.92Zm5.44-7.43c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.41-1.49-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.88 1.22 3.08c.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.63.71.23 1.36.19 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35Z" />
                 </svg>
                 <span>WhatsApp: {formattedPhone}</span>
               </a>
-
-              {contact?.email && (
-                <p className="pt-1">
-                  Email:{" "}
-                  <a
-                    href={`mailto:${contact.email}`}
-                    className="text-[#31483A] hover:underline font-semibold"
-                  >
-                    {contact.email}
-                  </a>
-                </p>
-              )}
-              {contact?.phone && (
-                <p>
-                  Call Desk:{" "}
-                  <a
-                    href={`tel:${contact.phone.replace(/\s+/g, "")}`}
-                    className="text-[#31483A] hover:underline font-semibold"
-                  >
-                    {contact.phone}
-                  </a>
-                </p>
-              )}
-              {contact?.hours && (
-                <p className="text-[11px] text-[#6D7168]/80">{contact.hours}</p>
-              )}
             </div>
-          </div>
+          </aside>
 
-          {/* Inquiry Form Card (7 cols) */}
-          <div className="lg:col-span-7">
-            <div className="bg-[#F6F2EA] rounded-sm p-7 sm:p-10 border border-[#E7DDCE] shadow-lg">
+          <div className="rounded-[24px] border border-[#E7DDCE] bg-[#F6F2EA]/75 p-6 shadow-sm sm:rounded-[30px] sm:p-9">
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              {rooms.length > 0 && (
+                <div>
+                  <label htmlFor={roomId} className={labelClass}>
+                    Preferred accommodation
+                  </label>
+                  <select
+                    id={roomId}
+                    value={formData.roomPreference}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, roomPreference: event.target.value }))
+                    }
+                    className={inputClass}
+                  >
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>
+                        {room.name}{room.rate ? ` — ${room.rate}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-              {/* Interactive Room Selection Pills */}
-              <div className="mb-6">
-                <span className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2.5">
-                  Choose Preferred Suite
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {rooms.map((room) => {
-                    const isSelected = formData.roomPreference === room.id;
-                    return (
-                      <button
-                        key={room.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, roomPreference: room.id })}
-                        className={`p-3 text-left rounded-sm border transition-all duration-200 text-xs ${isSelected
-                            ? "bg-[#31483A] text-[#FFFCF7] border-[#31483A] shadow-sm"
-                            : "bg-[#FFFCF7] text-[#252A24] border-[#E7DDCE] hover:border-[#B18A5A]"
-                          }`}
-                      >
-                        <span className="font-serif font-medium block text-sm leading-tight">
-                          {room.name}
-                        </span>
-                        {room.rate && (
-                          <span className={`block text-[10px] mt-1 ${isSelected ? "text-[#FFFCF7]/80" : "text-[#6D7168]"}`}>
-                            {room.rate}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={nameId} className={labelClass}>Full name *</label>
+                  <input
+                    id={nameId}
+                    type="text"
+                    autoComplete="name"
+                    value={formData.name}
+                    onChange={(event) => {
+                      setFormData((prev) => ({ ...prev, name: event.target.value }));
+                      setErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
+                    placeholder="Your name"
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={errors.name ? `${nameId}-error` : undefined}
+                    className={inputClass}
+                  />
+                  {errors.name && <p id={`${nameId}-error`} role="alert" className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                </div>
+                <div>
+                  <label htmlFor={emailId} className={labelClass}>Email address *</label>
+                  <input
+                    id={emailId}
+                    type="email"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={(event) => {
+                      setFormData((prev) => ({ ...prev, email: event.target.value }));
+                      setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
+                    placeholder="you@example.com"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? `${emailId}-error` : undefined}
+                    className={inputClass}
+                  />
+                  {errors.email && <p id={`${emailId}-error`} role="alert" className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} noValidate className="space-y-5">
-
-                {/* Full Name & Email */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label
-                      htmlFor={nameId}
-                      className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                    >
-                      Full Name <span className="text-[#B18A5A]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id={nameId}
-                      required
-                      value={formData.name}
-                      onChange={(e) => {
-                        setFormData({ ...formData, name: e.target.value });
-                        if (errors.name) setErrors({ ...errors, name: undefined });
-                      }}
-                      placeholder="e.g. Elena Rostova"
-                      className={`w-full px-4 py-3 text-sm bg-[#FFFCF7] border rounded-sm text-[#252A24] placeholder:text-[#6D7168]/50 focus:outline-none focus:ring-1 ${errors.name
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-[#E7DDCE] focus:border-[#31483A] focus:ring-[#31483A]"
-                        }`}
-                    />
-                    {errors.name && (
-                      <p className="text-xs text-red-600 mt-1.5" role="alert">
-                        {errors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor={emailId}
-                      className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                    >
-                      Email Address <span className="text-[#B18A5A]">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      id={emailId}
-                      required
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value });
-                        if (errors.email) setErrors({ ...errors, email: undefined });
-                      }}
-                      placeholder="elena@example.com"
-                      className={`w-full px-4 py-3 text-sm bg-[#FFFCF7] border rounded-sm text-[#252A24] placeholder:text-[#6D7168]/50 focus:outline-none focus:ring-1 ${errors.email
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-[#E7DDCE] focus:border-[#31483A] focus:ring-[#31483A]"
-                        }`}
-                    />
-                    {errors.email && (
-                      <p className="text-xs text-red-600 mt-1.5" role="alert">
-                        {errors.email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Dates: Arrival & Departure */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label
-                      htmlFor={arrivalId}
-                      className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                    >
-                      Arrival Date <span className="text-[#B18A5A]">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id={arrivalId}
-                      required
-                      min={todayStr}
-                      value={formData.arrival}
-                      onChange={(e) => handleArrivalChange(e.target.value)}
-                      className={`w-full px-4 py-3 text-sm bg-[#FFFCF7] border rounded-sm text-[#252A24] focus:outline-none focus:ring-1 ${errors.arrival
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-[#E7DDCE] focus:border-[#31483A] focus:ring-[#31483A]"
-                        }`}
-                    />
-                    {errors.arrival && (
-                      <p className="text-xs text-red-600 mt-1.5" role="alert">
-                        {errors.arrival}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor={departureId}
-                      className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                    >
-                      Departure Date <span className="text-[#B18A5A]">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id={departureId}
-                      required
-                      min={formData.arrival || todayStr}
-                      value={formData.departure}
-                      onChange={(e) => {
-                        setFormData({ ...formData, departure: e.target.value });
-                        if (errors.departure) setErrors({ ...errors, departure: undefined });
-                      }}
-                      className={`w-full px-4 py-3 text-sm bg-[#FFFCF7] border rounded-sm text-[#252A24] focus:outline-none focus:ring-1 ${errors.departure
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-[#E7DDCE] focus:border-[#31483A] focus:ring-[#31483A]"
-                        }`}
-                    />
-                    {errors.departure && (
-                      <p className="text-xs text-red-600 mt-1.5" role="alert">
-                        {errors.departure}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Guests */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label
-                    htmlFor={guestsId}
-                    className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                  >
-                    Number of Guests <span className="text-[#B18A5A]">*</span>
-                  </label>
-                  <select
-                    id={guestsId}
-                    value={formData.guests}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guests: parseInt(e.target.value, 10) })
-                    }
-                    className="w-full px-4 py-3 text-sm bg-[#FFFCF7] border border-[#E7DDCE] rounded-sm text-[#252A24] focus:outline-none focus:border-[#31483A] focus:ring-1 focus:ring-[#31483A]"
-                  >
-                    <option value={1}>1 Guest (Solo Retreat)</option>
-                    <option value={2}>2 Guests (Couple / Pair)</option>
-                    <option value={3}>3 Guests</option>
-                    <option value={4}>4 Guests (Family Suite)</option>
-                    <option value={6}>6+ Guests (Private Wing Reserve)</option>
-                  </select>
-                </div>
-
-                {/* Message */}
-                <div>
-                  <label
-                    htmlFor={messageId}
-                    className="block text-xs uppercase tracking-wider font-medium text-[#252A24] mb-2"
-                  >
-                    Special Requests &amp; Notes (Optional)
-                  </label>
-                  <textarea
-                    id={messageId}
-                    rows={3}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Dietary preferences, private 4x4 mountain transfer from Tbilisi, wine requests..."
-                    className="w-full px-4 py-3 text-sm bg-[#FFFCF7] border border-[#E7DDCE] rounded-sm text-[#252A24] placeholder:text-[#6D7168]/50 focus:outline-none focus:border-[#31483A] focus:ring-1 focus:ring-[#31483A]"
+                  <label htmlFor={arrivalId} className={labelClass}>Check-in *</label>
+                  <input
+                    id={arrivalId}
+                    type="date"
+                    min={todayStr || undefined}
+                    value={formData.arrival}
+                    onChange={(event) => handleArrivalChange(event.target.value)}
+                    aria-invalid={Boolean(errors.arrival)}
+                    aria-describedby={errors.arrival ? `${arrivalId}-error` : undefined}
+                    className={inputClass}
                   />
+                  {errors.arrival && <p id={`${arrivalId}-error`} role="alert" className="mt-1 text-xs text-red-600">{errors.arrival}</p>}
                 </div>
-
-                {/* Submit Action with Shimmer Button */}
                 <div>
-                  <button
-                    type="submit"
-                    className="shimmer-btn w-full py-4 text-xs uppercase tracking-[0.22em] font-bold text-[#FFFCF7] rounded-sm shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#31483A]"
-                  >
-                    Submit Villa Reservation Request
-                  </button>
-                  <p className="text-[11px] text-[#6D7168] text-center mt-3 font-normal">
-                    Direct booking request. No upfront deposit or credit card required.
-                  </p>
+                  <label htmlFor={departureId} className={labelClass}>Check-out *</label>
+                  <input
+                    id={departureId}
+                    type="date"
+                    min={formData.arrival ? addDaysToDate(formData.arrival, 1) : todayStr || undefined}
+                    value={formData.departure}
+                    onChange={(event) => {
+                      setFormData((prev) => ({ ...prev, departure: event.target.value }));
+                      setErrors((prev) => ({ ...prev, departure: undefined }));
+                    }}
+                    aria-invalid={Boolean(errors.departure)}
+                    aria-describedby={errors.departure ? `${departureId}-error` : undefined}
+                    className={inputClass}
+                  />
+                  {errors.departure && <p id={`${departureId}-error`} role="alert" className="mt-1 text-xs text-red-600">{errors.departure}</p>}
                 </div>
-              </form>
+              </div>
 
-              {/* Submission Modal */}
-              {submissionState.status !== "idle" && (
-                <div
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="submission-modal-title"
-                  className="fixed inset-0 z-50 bg-[#252A24]/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fade-in"
-                >
-                  <div className="bg-[#FFFCF7] rounded-sm border border-[#E7DDCE] max-w-lg w-full p-6 sm:p-8 shadow-2xl">
-                    {submissionState.actionType === "mailto" && (
-                      <div>
-                        <h3
-                          id="submission-modal-title"
-                          className="font-serif text-2xl text-[#252A24] font-medium mb-3"
-                        >
-                          Send Via Your Email App
-                        </h3>
-                        <p className="text-sm text-[#6D7168] leading-relaxed mb-4">
-                          To ensure complete transparency and direct communication, clicking below will open your default email program (Mail, Outlook, Gmail) with your pre-filled dates and room details addressed to our reservations desk:
-                        </p>
-                        <div className="bg-[#F6F2EA] p-3 rounded-sm border border-[#E7DDCE] text-xs font-mono text-[#252A24] mb-6">
-                          To: {inquiry.contactEmail}
-                        </div>
-                        <p className="text-xs text-[#6D7168] mb-6 italic">
-                          Please remember to tap <strong>Send</strong> in your email app to deliver the message.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <button
-                            type="button"
-                            onClick={handleLaunchExternalApp}
-                            className="flex-1 py-3 text-xs uppercase tracking-wider font-medium text-[#FFFCF7] bg-[#31483A] hover:bg-[#22352A] rounded-sm"
-                          >
-                            Open Email Application
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSubmissionState({ status: "idle" })}
-                            className="py-3 px-5 text-xs uppercase tracking-wider font-medium text-[#252A24] border border-[#E7DDCE] hover:bg-[#F6F2EA] rounded-sm"
-                          >
-                            Return
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {submissionState.actionType === "demo" && (
-                      <div>
-                        <div className="flex items-center space-x-2 text-[#B18A5A] mb-2">
-                          <span className="w-2 h-2 rounded-full bg-[#B18A5A]" />
-                          <span className="text-xs uppercase tracking-wider font-medium">
-                            Sales Presentation Demo
-                          </span>
-                        </div>
-                        <h3
-                          id="submission-modal-title"
-                          className="font-serif text-2xl text-[#252A24] font-medium mb-3"
-                        >
-                          Enquiry Form Validated
-                        </h3>
-                        <p className="text-sm text-[#6D7168] leading-relaxed mb-4">
-                          All client-side validation passed (Name: <strong>{formData.name}</strong>, {formData.arrival} to {formData.departure}, {formData.guests} guests).
-                        </p>
-                        <p className="text-xs text-[#6D7168] bg-[#F6F2EA] p-3.5 rounded-sm border border-[#E7DDCE] leading-relaxed mb-6">
-                          In this sales demonstration, no message was transmitted to a live property. When deployed for your hotel, inquiries route straight to your reservations email, WhatsApp concierge, or PMS webhook.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setSubmissionState({ status: "idle" })}
-                          className="w-full py-3 text-xs uppercase tracking-wider font-medium text-[#FFFCF7] bg-[#31483A] hover:bg-[#22352A] rounded-sm"
-                        >
-                          Close Demo Notice
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              {stayNights && (
+                <div className="flex items-center justify-between rounded-xl bg-[#f5f4ee] px-4 py-3 text-sm">
+                  <span className="text-[#6d756b]">Length of stay</span>
+                  <span className="font-semibold text-[#263d30]">
+                    {stayNights} {stayNights === 1 ? "night" : "nights"}
+                  </span>
                 </div>
               )}
 
-            </div>
-          </div>
+              <div>
+                <label htmlFor={guestsId} className={labelClass}>Guests *</label>
+                <select
+                  id={guestsId}
+                  value={formData.guests}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, guests: Number(event.target.value) }))
+                  }
+                  className={inputClass}
+                >
+                  {Array.from({ length: 6 }, (_, index) => index + 1).map((count) => (
+                    <option key={count} value={count}>
+                      {count} {count === 1 ? "guest" : "guests"}
+                    </option>
+                  ))}
+                </select>
+                {errors.guests && <p role="alert" className="mt-1 text-xs text-red-600">{errors.guests}</p>}
+              </div>
 
+              <div>
+                <label htmlFor={messageId} className={labelClass}>
+                  Special requests <span className="font-normal text-[#8b8d84]">(optional)</span>
+                </label>
+                <textarea
+                  id={messageId}
+                  rows={3}
+                  value={formData.message}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, message: event.target.value }))
+                  }
+                  placeholder="Anything we should know?"
+                  className={`${inputClass} resize-y`}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submissionState.status === "submitting"}
+                className="flex w-full transform cursor-pointer items-center justify-center gap-2 rounded-full bg-[#1B2E24] px-6 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-md transition-all duration-300 hover:scale-[1.01] hover:bg-[#31483A] hover:shadow-xl focus:outline-none disabled:cursor-wait disabled:opacity-60"
+              >
+                {submissionState.status === "submitting" ? "Sending Request…" : "Request Availability & Quote"}
+                <span aria-hidden="true">&rarr;</span>
+              </button>
+              <p className="text-center text-[11px] leading-relaxed text-[#6D7168]">
+                This is an enquiry only. Your stay is not booked until the property confirms availability and price.
+              </p>
+            </form>
+          </div>
         </div>
       </div>
+
+      {submissionState.status !== "idle" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submission-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#17251c]/60 p-4 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#e8e2d7] bg-white p-6 shadow-2xl sm:p-8">
+            {submissionState.actionType === "mailto" && (
+              <>
+                <h3 id="submission-modal-title" className="font-serif text-2xl font-semibold text-[#263d30]">Your enquiry is ready</h3>
+                <p className="mt-2 text-sm leading-6 text-[#73776e]">Open your email app to review and send your stay request.</p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button type="button" onClick={launchExternalApp} className="flex-1 rounded-xl bg-[#263d30] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1d3025]">Open email</button>
+                  <button type="button" onClick={() => setSubmissionState({ status: "idle" })} className="rounded-xl border border-[#e5e0d5] px-4 py-3 text-sm font-semibold text-[#263d30] hover:bg-[#f7f6f1]">Close</button>
+                </div>
+              </>
+            )}
+
+            {submissionState.actionType === "whatsapp" && (
+              <>
+                <h3 id="submission-modal-title" className="font-serif text-2xl font-semibold text-[#263d30]">Continue on WhatsApp</h3>
+                <p className="mt-2 text-sm leading-6 text-[#73776e]">Your stay details are ready. Open WhatsApp and send the message to the property.</p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button type="button" onClick={launchExternalApp} className="flex-1 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white hover:bg-[#20bd5a]">Open WhatsApp</button>
+                  <button type="button" onClick={() => setSubmissionState({ status: "idle" })} className="rounded-xl border border-[#e5e0d5] px-4 py-3 text-sm font-semibold text-[#263d30] hover:bg-[#f7f6f1]">Close</button>
+                </div>
+              </>
+            )}
+
+            {submissionState.actionType === "endpoint" && submissionState.status === "ready-to-send" && (
+              <>
+                <h3 id="submission-modal-title" className="font-serif text-2xl font-semibold text-[#263d30]">Request sent</h3>
+                <p className="mt-2 text-sm leading-6 text-[#73776e]">Your enquiry has been submitted. The property team can follow up with availability and pricing.</p>
+                <button type="button" onClick={() => setSubmissionState({ status: "idle" })} className="mt-6 w-full rounded-xl bg-[#263d30] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1d3025]">Done</button>
+              </>
+            )}
+
+            {submissionState.actionType === "demo" && (
+              <>
+                <h3 id="submission-modal-title" className="font-serif text-2xl font-semibold text-[#263d30]">Form validated</h3>
+                <p className="mt-2 text-sm leading-6 text-[#73776e]">Your details are ready, but this form is not connected to a live booking service yet.</p>
+                <button type="button" onClick={() => setSubmissionState({ status: "idle" })} className="mt-6 w-full rounded-xl bg-[#263d30] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1d3025]">Close</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

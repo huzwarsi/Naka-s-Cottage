@@ -200,7 +200,7 @@ export const hotelConfig: HotelConfig = {
       imageAlt: "Entire Naka's Cottage A-Frame exterior and private grounds",
       occupancy: "Up to 6 guests",
       size: "120 m² / 1,290 sq ft",
-      rate: "₾350 / night",
+      rate: "$65 / night",
       rateIsIllustrative: false,
       features: [
         "Private outdoor swimming pool & sun loungers",
@@ -609,4 +609,7 @@ export const staticHotels: Record<string, HotelConfig> = {
   "kazbegi-ridge": kazbegiRidgeConfig,
   "kazbegi": kazbegiRidgeConfig,
 };
+
+
+
 

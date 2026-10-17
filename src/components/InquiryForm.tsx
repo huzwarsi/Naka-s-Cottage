@@ -28,9 +28,8 @@ export function InquiryForm() {
   const hotel = useHotel();
   const { inquiry, rooms, name: hotelName, contact } = hotel;
 
-  const whatsappDisplay = (contact as any)?.whatsappNumber || "03132220567";
-  const cleanDigits = whatsappDisplay.replace(/[^0-9]/g, "");
-  const whatsappRaw = cleanDigits.startsWith("0") ? "92" + cleanDigits.slice(1) : cleanDigits;
+  const whatsappDisplay = (contact as any)?.whatsappNumber || "995597123880";
+  const whatsappRaw = whatsappDisplay.replace(/[^0-9]/g, "");
   const formattedPhone = formatPhoneNumber(whatsappDisplay);
 
   // Form IDs for accessibility
@@ -251,28 +250,28 @@ export function InquiryForm() {
     <section
       id="inquire"
       aria-labelledby="inquiry-heading"
-      className="py-20 sm:py-28 md:py-32 bg-[#FFFCF7] border-t border-[#E7DDCE] relative"
+      className="py-14 sm:py-20 md:py-24 bg-[#FFFCF7] border-t border-[#E7DDCE] relative"
     >
-      <div className="max-w-[1320px] mx-auto px-5 sm:px-8 md:px-12 lg:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
 
           {/* Context & Hospitality Notes (5 cols) */}
           <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
-              <div className="flex items-center space-x-2.5 mb-3">
-                <span className="w-8 h-[2px] bg-[#B18A5A]" />
-                <span className="text-xs uppercase tracking-[0.25em] font-bold text-[#B18A5A]">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="w-6 sm:w-8 h-[2px] bg-[#B18A5A]" />
+                <span className="text-[10px] sm:text-xs uppercase tracking-[0.22em] font-bold text-[#B18A5A]">
                   Direct Reservations
                 </span>
               </div>
               <h2
                 id="inquiry-heading"
-                className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#1B2E24] font-bold leading-tight mb-5"
+                className="font-serif text-2xl sm:text-3xl md:text-4xl text-[#1B2E24] font-bold leading-tight mb-3"
               >
-                Reserve Your Private Villa
+                Reserve Your Stay at {hotelName}
               </h2>
-              <p className="text-sm sm:text-base text-[#6D7168] font-normal leading-relaxed mb-6">
-                Select your check-in dates and preferred villa below. You can book instantly via WhatsApp on <strong className="text-[#1B2E24]">{formattedPhone}</strong> or submit your details to receive confirmed availability and pricing within 15 minutes.
+              <p className="text-xs sm:text-sm text-[#6D7168] font-normal leading-relaxed mb-5">
+                Select your check-in dates and preferred chalet option below. You can book instantly via WhatsApp on <strong className="text-[#1B2E24]">{formattedPhone}</strong> or submit an inquiry for fast 15-minute confirmation.
               </p>
 
               {/* Dynamic Live Price Calculator Badge */}

@@ -59,6 +59,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <a href="#reviews" className="hover:text-[#B18A5A] transition-colors">
+                  Guest Reviews
+                </a>
+              </li>
+              <li>
                 <a href="#location" className="hover:text-[#B18A5A] transition-colors">
                   Directions &amp; Map
                 </a>

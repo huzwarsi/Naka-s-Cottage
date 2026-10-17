@@ -160,6 +160,38 @@ textarea:focus-visible {
   background-position: -100% 0;
 }
 
+/* Smooth Infinite Reviews Marquee */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 45s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-track:hover,
+.animate-marquee-track.is-paused {
+  animation-play-state: paused;
+}
+
+/* Hide scrollbar for clean UI */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   html {

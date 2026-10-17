@@ -7,6 +7,7 @@ import { Story } from "@/components/Story";
 import { Rooms } from "@/components/Rooms";
 import { Amenities } from "@/components/Amenities";
 import { Gallery } from "@/components/Gallery";
+import { Reviews } from "@/components/Reviews";
 import { InquiryForm } from "@/components/InquiryForm";
 import { Location } from "@/components/Location";
 import { Footer } from "@/components/Footer";
@@ -45,6 +46,9 @@ export default async function Home({
 
           {/* Photography & Atmosphere Gallery with Lightbox */}
           <Gallery />
+
+          {/* Authentic Google Guest Reviews with Smooth Infinite Animation */}
+          <Reviews />
 
           {/* Reservation / Booking Inquiry Flow with Live Stay Estimate */}
           <InquiryForm />

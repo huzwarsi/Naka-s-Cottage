@@ -49,6 +49,7 @@ export function Header() {
     { label: "Story", href: "#story" },
     { label: "Amenities", href: "#experience" },
     { label: "Gallery", href: "#gallery" },
+    { label: "Reviews", href: "#reviews" },
     { label: "Location", href: "#location" },
   ];
 
